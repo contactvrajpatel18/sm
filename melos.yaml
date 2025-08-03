@@ -1,0 +1,15 @@
+name: sm
+
+packages:
+  - app/*
+  - model/*
+
+scripts:
+  analyze:
+    run: melos exec -- "flutter analyze"
+    description: Run `flutter analyze` in all packages.
+
+  test:
+    run: melos exec -- "flutter test"
+    description: Run `flutter test` in all packages with a `test` directory.
+

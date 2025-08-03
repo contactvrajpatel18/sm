@@ -1,0 +1,5 @@
+# Project exclude paths
+/app/student/ios/Flutter/
+/app/student/macos/Flutter/
+/app/teacher/ios/Flutter/
+/app/teacher/macos/Flutter/
