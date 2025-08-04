@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "13968475849",
+    "project_id": "ssmm-514fe",
+    "storage_bucket": "ssmm-514fe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:13968475849:android:964d13af9a4657959f2f18",
+        "android_client_info": {
+          "package_name": "com.example.student"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBf-01FHkqM5zDGgcaO4aLNm-4U8jbYpbc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:13968475849:android:fbd282e87f6ca0019f2f18",
+        "android_client_info": {
+          "package_name": "com.example.teacher"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBf-01FHkqM5zDGgcaO4aLNm-4U8jbYpbc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
