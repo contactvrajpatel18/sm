@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:student/view/attendence/screen/attendence.dart';
 import 'package:student/view/authentication/screen/mobile_number.dart';
 import 'package:student/view/delet/01populate_data.dart';
 import 'package:student/view/profile/screen/profile.dart';
@@ -41,16 +42,15 @@ class Drawerr extends StatelessWidget {
                   );
                 },),
 
-              // ListTile(leading: Icon(Icons.event), title: Text('Attendance'),
-              //   onTap: () {
-              //
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (context) => AttendenceScreen(),
-              //       ),
-              //     );
-              //   },),
+              ListTile(leading: Icon(Icons.event), title: Text('Attendance'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Attendence(),
+                    ),
+                  );
+                },),
 
 
               ListTile(leading: Icon(Icons.phone), title: Text('Contact Us')),
