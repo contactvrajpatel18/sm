@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:student/view/authentication/screen/mobile_number.dart';
 import 'package:student/view/delet/01populate_data.dart';
+import 'package:student/view/profile/screen/profile.dart';
 
 class Drawerr extends StatelessWidget {
   const Drawerr({super.key});
@@ -30,15 +31,15 @@ class Drawerr extends StatelessWidget {
                   );
                 },),
 
-              // ListTile(leading: Icon(Icons.person), title: Text('Profile'),
-              //   onTap: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (context) => StudentProfileScreen(),
-              //       ),
-              //     );
-              //   },),
+              ListTile(leading: Icon(Icons.person), title: Text('Profile'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Profile(),
+                    ),
+                  );
+                },),
 
               // ListTile(leading: Icon(Icons.event), title: Text('Attendance'),
               //   onTap: () {

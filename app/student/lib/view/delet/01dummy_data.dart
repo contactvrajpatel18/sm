@@ -22,8 +22,8 @@
 
 
 final dummyTeachers = {
-  "mkEAOmSVQiQ8jreWnjMAhVKsrko2": {
-    "id": "mkEAOmSVQiQ8jreWnjMAhVKsrko2",
+  "9mGtH3RXGhhkrj1Od4AwvDoZThm2": {
+    "id": "9mGtH3RXGhhkrj1Od4AwvDoZThm2",
     "name": "Anjali Mehta",
     "gender": "Female",
     "dob": "1990-04-12",
@@ -50,12 +50,12 @@ final dummyTeachers = {
 
 final dummyClasses = {
   "2B": {
-    "teacherId": "mkEAOmSVQiQ8jreWnjMAhVKsrko2",
-    "students": ["rCiE6kzZ1Qec58AhamTrVC9Wyv32"]
+    "teacherId": "9mGtH3RXGhhkrj1Od4AwvDoZThm2",
+    "students": ["E6aYaavOKWXWRoUDAmu4O26IEc83"]
   },
   "4C": {
-    "teacherId": "mkEAOmSVQiQ8jreWnjMAhVKsrko2",
-    "students": ["J0GXLfrl1ncWBPsrN9ROkHXGl1w1"]
+    "teacherId": "9mGtH3RXGhhkrj1Od4AwvDoZThm2",
+    "students": ["DpcCqrBzOsMQQEHyxE9o4S4c6t83"]
   }
 };
 
@@ -262,8 +262,8 @@ final dummyClasses = {
 // };
 
 final dummyStudents = {
-  "rCiE6kzZ1Qec58AhamTrVC9Wyv32": {
-    "id": "rCiE6kzZ1Qec58AhamTrVC9Wyv32",
+  "E6aYaavOKWXWRoUDAmu4O26IEc83": {
+    "id": "E6aYaavOKWXWRoUDAmu4O26IEc83",
     "name": "Ravi Patel",
     "gender": "Male",
     "dob": "2017-08-15",
@@ -308,8 +308,8 @@ final dummyStudents = {
     }
   },
 
-  "J0GXLfrl1ncWBPsrN9ROkHXGl1w1": {
-    "id": "J0GXLfrl1ncWBPsrN9ROkHXGl1w1",
+  "DpcCqrBzOsMQQEHyxE9o4S4c6t83": {
+    "id": "DpcCqrBzOsMQQEHyxE9o4S4c6t83",
     "name": "Nisha Mehta",
     "gender": "Female",
     "dob": "2018-06-10",
