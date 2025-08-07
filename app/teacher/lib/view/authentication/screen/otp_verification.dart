@@ -35,7 +35,7 @@ class _OtpVerificationState extends State<OtpVerification> {
       });
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => Home()),
+        MaterialPageRoute(builder: (context) => HomeScreen()),
             (Route<dynamic> route) => false,
       );
 

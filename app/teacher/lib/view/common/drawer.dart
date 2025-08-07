@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:teacher/view/authentication/screen/mobile_number.dart';
+import 'package:teacher/view/profile/screen/teacherprofile_screen.dart';
 
 class Drawerr extends StatelessWidget {
   const Drawerr({super.key});
@@ -23,15 +24,15 @@ class Drawerr extends StatelessWidget {
                   Navigator.pop(context);
                 },),
 
-              // ListTile(leading: Icon(Icons.person), title: Text('Profile'),
-              //   onTap: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (context) => StudentProfileScreen(),
-              //       ),
-              //     );
-              //   },),
+              ListTile(leading: Icon(Icons.person), title: Text('Profile'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TeacherProfileScreen(),
+                    ),
+                  );
+                },),
 
               // ListTile(leading: Icon(Icons.event), title: Text('Attendance'),
               //   onTap: () {

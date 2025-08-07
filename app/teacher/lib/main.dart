@@ -1,6 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:teacher/backend/class/class_provider.dart';
+import 'package:teacher/backend/student/student_provider.dart';
+import 'package:teacher/backend/teacher/teacher_provider.dart';
 import 'package:teacher/splash.dart';
 
 import 'firebase_options.dart';
@@ -16,14 +20,14 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(
-    // MultiProvider(
-    // providers: [
-    //   ChangeNotifierProvider(create: (_) => StudentProfileProvider()),
-    // ],
-    // child:
-      MyApp()
-
-    // ),
+    MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => StudentProvider()),
+      ChangeNotifierProvider(create: (_) => TeacherProvider()),
+      ChangeNotifierProvider(create: (_) => ClassProvider()),
+    ],
+    child: MyApp()
+     ),
   );
 }
 

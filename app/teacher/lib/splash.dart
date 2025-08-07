@@ -25,7 +25,7 @@ class _SplashState extends State<Splash> {
     if (user != null && user.phoneNumber != null) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Home()),
+        MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     } else {
       Navigator.pushReplacement(
