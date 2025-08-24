@@ -1,13 +1,19 @@
-class ClassHistoryEntry {
+class ClassHistory {
   final String year;
   final String classId;
+  final String result;
 
-  ClassHistoryEntry({required this.year, required this.classId});
+  ClassHistory({
+    required this.year,
+    required this.classId,
+    required this.result,
+  });
 
-  factory ClassHistoryEntry.fromMap(Map<String, dynamic> map) {
-    return ClassHistoryEntry(
+  factory ClassHistory.fromMap(Map<String, dynamic> map) {
+    return ClassHistory(
       year: map['year'] ?? '',
       classId: map['classId'] ?? '',
+      result: map['result'] ?? '',
     );
   }
 
@@ -15,11 +21,12 @@ class ClassHistoryEntry {
     return {
       'year': year,
       'classId': classId,
+      'result': result,
     };
   }
 
   @override
   String toString() {
-    return 'ClassHistoryEntry(year: $year, classId: $classId)';
+    return 'ClassHistory(year: $year, classId: $classId, result: $result)';
   }
 }

@@ -19,24 +19,23 @@ class ClassController {
     }
   }
 
-  Future<ClassModel?> getClassByYear(String year) async {
-    try {
-      final doc = await _classCollection.doc(year).get();
+
+   Future<ClassModel?> getClassByYear(String year) async {
+      try {
+     final doc = await _classCollection.doc(year).get();
       if (doc.exists && doc.data() != null) {
-        // The data is directly a map of class IDs to ClassInfo
-        return ClassModel.fromMap(doc.data()!);
-      }
+      // The data is directly a map of class IDs to ClassInfo
+      return ClassModel.fromMap(doc.data()!);
+     }
       return null;
-    } catch (e) {
+     } catch (e) {
       print('Error fetching class data: $e');
       return null;
-    }
-  }
+      }
 
+   }
 
-
-
-  Future<void> readClassDats(String classId, ClassProvider classprovider) async {
+    Future<void> readClassDats(String classId, ClassProvider classprovider) async {
     classprovider.setLoading(true);
     try {
       final doc = await _classCollection.doc(classId).get();
@@ -54,3 +53,14 @@ class ClassController {
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+

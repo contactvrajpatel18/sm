@@ -11,8 +11,10 @@ class StudentModel {
   final String address;
   final String profileImageUrl;
   final String admissionDate;
-  final List<ClassHistoryEntry> classHistory;
-  final Map<String, ClassRecord> classRecords;
+  final bool isActive;
+
+  final List<ClassHistory> classHistory;
+  final Map<String, Map<String, ClassRecord>> classRecords;
 
   StudentModel({
     required this.id,
@@ -24,11 +26,12 @@ class StudentModel {
     required this.address,
     required this.profileImageUrl,
     required this.admissionDate,
+    required this.isActive,
     required this.classHistory,
     required this.classRecords,
   });
 
-  factory StudentModel.fromMap( Map<String, dynamic> map) {
+  factory StudentModel.fromMap(Map<String, dynamic> map) {
     return StudentModel(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
@@ -39,17 +42,26 @@ class StudentModel {
       address: map['address'] ?? '',
       profileImageUrl: map['profileImageUrl'] ?? '',
       admissionDate: map['admissionDate'] ?? '',
-      classHistory: (map['classHistory'] as List)
-          .map((e) => ClassHistoryEntry.fromMap(e))
+      isActive: map['isActive'] ?? false,
+      classHistory: (map['classHistory'] as List<dynamic>? ?? [])
+          .map((e) => ClassHistory.fromMap(e))
           .toList(),
-      classRecords: (map['classRecords'] as Map<String, dynamic>).map(
-            (key, value) => MapEntry(key, ClassRecord.fromMap(value)),
-      ),
+      classRecords: (map['classRecords'] as Map<String, dynamic>? ?? {})
+          .map((year, yearData) => MapEntry(
+        year,
+        (yearData as Map<String, dynamic>).map(
+              (classId, record) => MapEntry(
+            classId,
+            ClassRecord.fromMap(record),
+          ),
+        ),
+      )),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'name': name,
       'gender': gender,
       'dob': dob,
@@ -58,13 +70,21 @@ class StudentModel {
       'address': address,
       'profileImageUrl': profileImageUrl,
       'admissionDate': admissionDate,
+      'isActive': isActive,
       'classHistory': classHistory.map((e) => e.toMap()).toList(),
-      'classRecords': classRecords.map((k, v) => MapEntry(k, v.toMap())),
+      'classRecords': classRecords.map((year, yearData) => MapEntry(
+        year,
+        yearData.map((classId, record) => MapEntry(classId, record.toMap())),
+      )),
     };
   }
 
   @override
   String toString() {
-    return 'Student(id: $id, name: $name, gender: $gender, dob: $dob)';
+    return 'Student(id: $id, name: $name, gender: $gender, dob: $dob, '
+        'contact: $contact, parentContact: $parentContact, address: $address, '
+        'profileImageUrl: $profileImageUrl, admissionDate: $admissionDate, isActive: $isActive, '
+        'classHistory: $classHistory, classRecords: $classRecords)';
   }
 }
+

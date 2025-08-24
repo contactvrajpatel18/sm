@@ -7,6 +7,7 @@ import 'package:student/backend/student/student_controller.dart';
 import 'package:student/backend/student/student_provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:model/utils/date.dart';
+import 'package:model/student/classhistory_model.dart';
 
 class Attendence extends StatefulWidget {
   const Attendence({super.key});
@@ -17,19 +18,57 @@ class Attendence extends StatefulWidget {
 
 class _AttendenceState extends State<Attendence> {
   final StudentController _controller = StudentController();
-  final String? id = FirebaseAuth.instance.currentUser?.uid;
+  final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
-  String? selectedClassId;
+  String? _selectedClassId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final studentProvider = Provider.of<StudentProvider>(context, listen: false);
-      if (studentProvider.getSingleStudent.isEmpty && id != null) {
-        _controller.readSingleStudent( studentId: id!, studentProvider: studentProvider);
+      if (studentProvider.getSingleStudent.isEmpty && _currentUserId != null) {
+        _controller.readSingleStudent(studentId: _currentUserId!, studentProvider: studentProvider);
       }
     });
+  }
+
+  Map<DateTime, String> _parseAttendance(StudentModel student) {
+    final Map<DateTime, String> attendanceMap = {};
+
+    if (_selectedClassId != null) {
+      // Find the year for the selected class
+      final String? selectedYear = student.classHistory.firstWhere(
+            (h) => h.classId == _selectedClassId,
+        orElse: () => ClassHistory(year: '', classId: '', result: ''),
+      ).year;
+
+      if (selectedYear != null && selectedYear.isNotEmpty) {
+        final classRecordsForYear = student.classRecords[selectedYear];
+        if (classRecordsForYear != null) {
+          final classRecord = classRecordsForYear[_selectedClassId];
+          if (classRecord != null) {
+            classRecord.attendance.forEach((monthString, days) {
+              final parts = monthString.split('-');
+              if (parts.length == 2) {
+                final year = int.tryParse(parts[0]);
+                final month = int.tryParse(parts[1]);
+                if (year != null && month != null) {
+                  days.forEach((dayString, status) {
+                    final day = int.tryParse(dayString);
+                    if (day != null) {
+                      final date = DateTime(year, month, day);
+                      attendanceMap[date] = status;
+                    }
+                  });
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+    return attendanceMap;
   }
 
   @override
@@ -70,33 +109,11 @@ class _AttendenceState extends State<Attendence> {
 
           final StudentModel student = provider.getSingleStudent.first;
 
-          if (selectedClassId == null && student.classHistory.isNotEmpty) {
-            selectedClassId = student.classHistory.last.classId;
+          if (_selectedClassId == null && student.classHistory.isNotEmpty) {
+            _selectedClassId = student.classHistory.last.classId;
           }
 
-          final Map<DateTime, String> dynamicAttendanceMap = {};
-
-          if (selectedClassId != null) {
-            final classRecord = student.classRecords[selectedClassId];
-            if (classRecord != null) {
-              classRecord.attendance.forEach((monthString, days) {
-                final parts = monthString.split('-');
-                if (parts.length == 2) {
-                  final year = int.tryParse(parts[0]);
-                  final month = int.tryParse(parts[1]);
-                  if (year != null && month != null) {
-                    days.forEach((dayString, status) {
-                      final day = int.tryParse(dayString);
-                      if (day != null) {
-                        final date = DateTime(year, month, day);
-                        dynamicAttendanceMap[date] = status;
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          }
+          final Map<DateTime, String> dynamicAttendanceMap = _parseAttendance(student);
 
           int totalPresent = 0;
           int totalAbsent = 0;
@@ -111,14 +128,24 @@ class _AttendenceState extends State<Attendence> {
           final int totalDays = totalPresent + totalAbsent;
           final double attendancePercentage = totalDays > 0 ? (totalPresent / totalDays) * 100 : 0.0;
 
+          final String? selectedYear = student.classHistory.firstWhere(
+                (h) => h.classId == _selectedClassId,
+            orElse: () => ClassHistory(year: '', classId: '', result: ''),
+          ).year;
+
+          String rollNumber = 'N/A';
+          if (selectedYear != null && selectedYear.isNotEmpty && student.classRecords.containsKey(selectedYear)) {
+            final classRecord = student.classRecords[selectedYear]?[_selectedClassId];
+            if (classRecord != null) {
+              rollNumber = classRecord.rollNo.toString();
+            }
+          }
+
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              if (student.classHistory.isNotEmpty)
-                _buildClassSelectorDropdown(student),
-
+              _buildClassAndRollHeader(student, rollNumber),
               const SizedBox(height: 20),
-
               Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -128,12 +155,12 @@ class _AttendenceState extends State<Attendence> {
                     firstDay: Date.stringToDateTime(student.admissionDate),
                     lastDay: Date.getCurrentDate(),
                     focusedDay: Date.getCurrentDate(),
-                    calendarStyle: CalendarStyle(
+                    calendarStyle: const CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: Colors.blueAccent.withOpacity(0.5),
+                        color: Colors.blueAccent,
                         shape: BoxShape.circle,
                       ),
-                      todayTextStyle: const TextStyle(color: Colors.white),
+                      todayTextStyle: TextStyle(color: Colors.white),
                     ),
                     headerStyle: const HeaderStyle(
                       formatButtonVisible: false,
@@ -144,7 +171,6 @@ class _AttendenceState extends State<Attendence> {
                       defaultBuilder: (context, day, focusedDay) {
                         final normalizedDay = DateTime(day.year, day.month, day.day);
                         final status = dynamicAttendanceMap[normalizedDay];
-
                         if (status == 'P') {
                           return _buildAttendanceCell(day, Colors.green);
                         } else if (status == 'A') {
@@ -156,16 +182,12 @@ class _AttendenceState extends State<Attendence> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
-
               const Text(
                 'Attendance Statistics',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-
-              // CHANGED: Call the new _buildStatsWrap method instead of the grid
               _buildStatsWrap(
                 context,
                 totalPresent,
@@ -180,9 +202,39 @@ class _AttendenceState extends State<Attendence> {
     );
   }
 
-  Widget _buildClassSelectorDropdown(StudentModel profile) {
+  Widget _buildClassAndRollHeader(StudentModel student, String rollNumber) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: _buildClassSelectorDropdown(student)),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text(
+                  'Roll No.',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                Text(
+                  rollNumber,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClassSelectorDropdown(StudentModel student) {
     return DropdownButtonFormField<String>(
-      value: selectedClassId,
+      value: _selectedClassId,
       decoration: InputDecoration(
         labelText: 'Select Class',
         fillColor: Colors.white,
@@ -190,7 +242,7 @@ class _AttendenceState extends State<Attendence> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
-      items: profile.classHistory.map((classData) {
+      items: student.classHistory.map((classData) {
         return DropdownMenuItem<String>(
           value: classData.classId,
           child: Text("Class ${classData.classId} (${classData.year})"),
@@ -199,7 +251,7 @@ class _AttendenceState extends State<Attendence> {
       onChanged: (String? newValue) {
         if (newValue != null) {
           setState(() {
-            selectedClassId = newValue;
+            _selectedClassId = newValue;
           });
         }
       },
@@ -224,20 +276,15 @@ class _AttendenceState extends State<Attendence> {
     );
   }
 
-  // NEW: Widget that builds a responsive Wrap layout for the stats cards
   Widget _buildStatsWrap(BuildContext context, int present, int absent, int total, double percentage) {
-    // --- Responsive Card Sizing ---
     final double screenWidth = MediaQuery.of(context).size.width;
-    // Get total horizontal padding from the parent ListView (16 on each side)
     const double horizontalPadding = 16.0 * 2;
-    // Define the spacing between cards
     const double cardSpacing = 12.0;
-    // Calculate the ideal width for each card to fit 2 per row
     final double cardWidth = (screenWidth - horizontalPadding - cardSpacing) / 2;
 
     return Wrap(
-      spacing: cardSpacing, // Horizontal space between cards
-      runSpacing: cardSpacing, // Vertical space between lines of cards
+      spacing: cardSpacing,
+      runSpacing: cardSpacing,
       children: [
         SizedBox(
           width: cardWidth,
@@ -277,7 +324,6 @@ class _AttendenceState extends State<Attendence> {
       ],
     );
   }
-
 
   Widget _buildStatCard({required IconData icon, required String label, required String value, required Color color}) {
     return Card(

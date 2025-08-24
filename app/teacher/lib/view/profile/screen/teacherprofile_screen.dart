@@ -37,6 +37,21 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
     });
   }
 
+  // Helper method to format the assigned classes map into a readable string
+  String _formatAssignedClasses(Map<String, List<String>> assignedClasses) {
+    if (assignedClasses.isEmpty) {
+      return 'No classes assigned.';
+    }
+
+    final formattedEntries = assignedClasses.entries.map((entry) {
+      final year = entry.key;
+      final classes = entry.value.join(', ');
+      return '$year: $classes';
+    }).toList();
+
+    return formattedEntries.join('\n');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,13 +185,13 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
         _buildInfoTile(
           icon: Icons.book_outlined,
           title: "Subjects Taught",
-          value: teacherData.subjects.join(', '), // Join list of subjects
+          value: teacherData.subjects.join(', '),
           isMultiLine: true,
         ),
         _buildInfoTile(
           icon: Icons.class_outlined,
           title: "Assigned Classes",
-          value: teacherData.assignedClasses.join(', '), // Join list of classes
+          value: _formatAssignedClasses(teacherData.assignedClasses), // Use the new helper method
           isMultiLine: true,
         ),
       ],

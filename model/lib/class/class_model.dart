@@ -1,26 +1,29 @@
-class ClassModel {
-  final String teacherId;
-  final List<String> students;
+import 'class_info_model.dart';
 
-  ClassModel({
-    required this.teacherId,
-    required this.students,
-  });
+class ClassModel {
+  final Map<String, ClassInfo> classes;
+
+  ClassModel({required this.classes});
 
   factory ClassModel.fromMap(Map<String, dynamic> map) {
     return ClassModel(
-      teacherId: map['teacherId'],
-      students: List<String>.from(map['students']),
+      classes: map.map(
+            (classId, value) => MapEntry(
+          classId,
+          ClassInfo.fromMap(value as Map<String, dynamic>),
+        ),
+      ),
     );
   }
 
-  Map<String, dynamic> toMap() => {
-    'teacherId': teacherId,
-    'students': students,
-  };
+  Map<String, dynamic> toMap() {
+    return classes.map(
+          (classId, info) => MapEntry(classId, info.toMap()),
+    );
+  }
 
   @override
   String toString() {
-    return 'SchoolClass(teacherId: $teacherId, students: $students)';
+    return 'ClassModel(classes: $classes)';
   }
 }
