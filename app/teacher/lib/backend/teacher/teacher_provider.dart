@@ -38,12 +38,6 @@ class TeacherProvider with ChangeNotifier {
     _selectedClassStudents = [];
   }
 
-  // void setSelectedClassStudents(List<StudentModel> students) {
-  //   _selectedClassStudents = students;
-  //   notifyListeners();
-  // }
-
-  // Method to set students for the selected class
   void setSelectedClassStudents(List<StudentModel> students) {
     _selectedClassStudents = students;
     notifyListeners();

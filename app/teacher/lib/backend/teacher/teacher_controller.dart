@@ -23,8 +23,4 @@ class TeacherController {
     }
   }
 
-  // Future<Map<String, dynamic>?> getTeacher(String teacherId) async {
-  //   final doc = await _TeacherCollection.doc(teacherId).get();
-  //   return doc.data();
-  // }
 }
