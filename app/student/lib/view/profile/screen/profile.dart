@@ -70,10 +70,6 @@ class _ProfileState extends State<Profile> {
             return const Center(child: Loader());
           }
 
-          if (provider.getSingleStudent.isEmpty) {
-            return const Center(child: Text("No student data found"));
-          }
-
           if (provider.error != null) {
             return Center(
               child: Text(
@@ -82,6 +78,10 @@ class _ProfileState extends State<Profile> {
                 textAlign: TextAlign.center,
               ),
             );
+          }
+
+          if (provider.getSingleStudent.isEmpty) {
+            return const Center(child: Text("No student data found"));
           }
 
           final StudentModel student = provider.getSingleStudent.first;
@@ -93,11 +93,12 @@ class _ProfileState extends State<Profile> {
             );
           }
 
-          if (classProvider!.getclassdata.isNotEmpty) {
+          if (classProvider != null && classProvider!.getclassdata.isNotEmpty) {
             classData = classProvider!.getclassdata;
           } else {
-            print("No class data available yet.");
+            classData = [];
           }
+
 
           if (selectedClassId != null && classData != null) {
             final selectedYear = selectedClassId!.year;
