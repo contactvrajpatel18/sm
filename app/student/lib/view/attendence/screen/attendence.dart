@@ -17,7 +17,6 @@ class Attendence extends StatefulWidget {
 }
 
 class _AttendenceState extends State<Attendence> {
-  final StudentController _controller = StudentController();
   final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
   String? _selectedClassId;
@@ -27,8 +26,10 @@ class _AttendenceState extends State<Attendence> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final studentProvider = Provider.of<StudentProvider>(context, listen: false);
+      final StudentController _controller = StudentController(studentProvider);
+
       if (studentProvider.getSingleStudent.isEmpty && _currentUserId != null) {
-        _controller.readSingleStudent(studentId: _currentUserId!, studentProvider: studentProvider);
+        _controller.getSingleStudent(studentId: _currentUserId!);
       }
     });
   }
@@ -37,7 +38,6 @@ class _AttendenceState extends State<Attendence> {
     final Map<DateTime, String> attendanceMap = {};
 
     if (_selectedClassId != null) {
-      // Find the year for the selected class
       final String? selectedYear = student.classHistory.firstWhere(
             (h) => h.classId == _selectedClassId,
         orElse: () => ClassHistory(year: '', classId: '', result: ''),

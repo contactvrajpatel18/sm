@@ -1,4 +1,3 @@
-
 class ClassInfo {
   final String teacherId;
   final int fee;
@@ -30,4 +29,5 @@ class ClassInfo {
   String toString() {
     return 'ClassInfo(teacherId: $teacherId, fee: $fee, students: $students)';
   }
+
 }

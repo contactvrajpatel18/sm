@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:student/backend/student/student_provider.dart';
 import 'package:student/splash.dart';
+import 'backend/class/class_provider.dart';
 import 'firebase_options.dart';
 
 
@@ -21,6 +22,8 @@ Future<void> main() async {
     MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => StudentProvider()),
+      ChangeNotifierProvider(create: (_) => ClassProvider()),
+
     ],
     child: MyApp()
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:collection';
+
 import 'package:model/class/class_model.dart';
 
 class ClassProvider with ChangeNotifier {

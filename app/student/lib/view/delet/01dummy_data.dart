@@ -273,6 +273,7 @@ final dummyTeachers = {
 
 final dummyClasses = {
   "2023": {
+    "id" : "2023",
     "1A": {
       "teacherId": "3ro2Ewb6QgXdmBKRPBlboKhkmZA3",
       "fee": 12000,
@@ -291,6 +292,7 @@ final dummyClasses = {
   },
 
   "2024": {
+    "id" : "2024",
     "2A": {
       "teacherId": "OurKIGn9qpSZl1xo5Rq0JWtdwwD2",
       "fee": 15000,
@@ -309,6 +311,7 @@ final dummyClasses = {
   },
 
   "2025": {
+    "id" : "2025",
     "3A": {
       "teacherId": "OurKIGn9qpSZl1xo5Rq0JWtdwwD2",
       "fee": 18000,

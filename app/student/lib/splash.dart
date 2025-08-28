@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:student/view/home/screen/home.dart';
 import 'view/authentication/screen/mobile_number.dart';
-import 'view/home/screen/home.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
