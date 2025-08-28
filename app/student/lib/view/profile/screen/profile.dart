@@ -64,27 +64,27 @@ class _ProfileState extends State<Profile> {
     return Scaffold(
       backgroundColor: screenBackground,
       appBar: AppbarCommon("Student Profile", showBack: true),
-      body: Consumer<StudentProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
+      body: Consumer2<StudentProvider, ClassProvider>(
+        builder: (context, studentProvider,classProvider, child) {
+          if (studentProvider.isLoading) {
             return const Center(child: Loader());
           }
 
-          if (provider.error != null) {
+          if (studentProvider.error != null) {
             return Center(
               child: Text(
-                provider.error!,
+                studentProvider.error!,
                 style: const TextStyle(fontSize: 16, color: Colors.red),
                 textAlign: TextAlign.center,
               ),
             );
           }
 
-          if (provider.getSingleStudent.isEmpty) {
+          if (studentProvider.getSingleStudent.isEmpty) {
             return const Center(child: Text("No student data found"));
           }
 
-          final StudentModel student = provider.getSingleStudent.first;
+          final StudentModel student = studentProvider.getSingleStudent.first;
 
           if (selectedClassId == null && student.classHistory.isNotEmpty) {
             selectedClassId = ClassSelection(
@@ -93,12 +93,7 @@ class _ProfileState extends State<Profile> {
             );
           }
 
-          if (classProvider != null && classProvider!.getclassdata.isNotEmpty) {
-            classData = classProvider!.getclassdata;
-          } else {
-            classData = [];
-          }
-
+          final List<ClassModel> classData = classProvider.getclassdata;
 
           if (selectedClassId != null && classData != null) {
             final selectedYear = selectedClassId!.year;
@@ -108,14 +103,14 @@ class _ProfileState extends State<Profile> {
               orElse: () => ClassModel(id: selectedYear, classes: {}),
             );
 
-            classFee =
-                classModelForYear.classes[selectedClassId!.classId]?.fee ?? 0;
+            classFee = classModelForYear.classes[selectedClassId!.classId]?.fee ?? 0;
           }
 
           if (selectedClassId != null) {
             currentClassRecord = student
                 .classRecords[selectedClassId?.year]?[selectedClassId?.classId];
           }
+
           final String rollNo =
               currentClassRecord?.rollNo.toString() ?? "Not assigned";
 
