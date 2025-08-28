@@ -33,7 +33,6 @@ class _ProfileState extends State<Profile> {
   ClassProvider? classProvider;
   ClassController? classController;
 
-  List<ClassModel>? classData;
 
   @override
   void initState() {
