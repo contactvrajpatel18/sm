@@ -10,7 +10,7 @@ class ClassController {
 
   ClassController(this.classProvider);
 
-  Future<List<ClassModel>?> getAllClass() async {
+  Future<List<ClassModel>?> fetchAllClass() async {
     classProvider.setLoading(true);
     try {
       final snapshot = await _classCollection.get();
@@ -37,7 +37,7 @@ class ClassController {
     }
   }
 
-  Future<ClassModel?> getClassByYear({required String year}) async {
+  Future<ClassModel?> fetchClassByYear({required String year}) async {
     classProvider.setLoading(true);
     try {
       final doc = await _classCollection.doc(year).get();
@@ -59,7 +59,7 @@ class ClassController {
     }
   }
 
-  Future<ClassInfo?> getClassByYearAndName({required String year,required String className}) async {
+  Future<ClassInfo?> fetchClassByYearAndName({required String year,required String className}) async {
     classProvider.setLoading(true);
     try {
       final doc = await _classCollection.doc(year).get();

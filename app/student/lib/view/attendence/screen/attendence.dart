@@ -1,13 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:model/coman/selected_class_year.dart';
+import 'package:model/student/classrecord_model.dart';
 import 'package:model/student/student_model.dart';
 import 'package:model/utils/loader.dart';
 import 'package:provider/provider.dart';
 import 'package:student/backend/student/student_controller.dart';
 import 'package:student/backend/student/student_provider.dart';
+import 'package:student/view/common/colors.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:model/utils/date.dart';
-import 'package:model/student/classhistory_model.dart';
+
 
 class Attendence extends StatefulWidget {
   const Attendence({super.key});
@@ -15,68 +18,68 @@ class Attendence extends StatefulWidget {
   @override
   State<Attendence> createState() => _AttendenceState();
 }
-
 class _AttendenceState extends State<Attendence> {
-  final String? _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
-  String? _selectedClassId;
+  SelectedClassYear? selectedClassYear;
+
+  late StudentProvider studentProvider;
+  late StudentController studentController;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final studentProvider = Provider.of<StudentProvider>(context, listen: false);
-      final StudentController _controller = StudentController(studentProvider);
-
-      if (studentProvider.getSingleStudent.isEmpty && _currentUserId != null) {
-        _controller.getSingleStudent(studentId: _currentUserId!);
-      }
+      loadStudentAndClassData();
     });
   }
 
-  Map<DateTime, String> _parseAttendance(StudentModel student) {
+  void loadStudentAndClassData() {
+
+    studentProvider = Provider.of<StudentProvider>(context, listen: false);
+    studentController = StudentController(studentProvider);
+
+    if (studentProvider.getSingleStudent.isEmpty && currentUserId != null) {
+      studentController.fetchSingleStudent(studentId: currentUserId!);
+    }
+  }
+
+  Map<DateTime, String> attendanceMap(StudentModel studentData) {
     final Map<DateTime, String> attendanceMap = {};
 
-    if (_selectedClassId != null) {
-      final String? selectedYear = student.classHistory.firstWhere(
-            (h) => h.classId == _selectedClassId,
-        orElse: () => ClassHistory(year: '', classId: '', result: ''),
-      ).year;
+    if (selectedClassYear == null) return attendanceMap;
 
-      if (selectedYear != null && selectedYear.isNotEmpty) {
-        final classRecordsForYear = student.classRecords[selectedYear];
-        if (classRecordsForYear != null) {
-          final classRecord = classRecordsForYear[_selectedClassId];
-          if (classRecord != null) {
-            classRecord.attendance.forEach((monthString, days) {
-              final parts = monthString.split('-');
-              if (parts.length == 2) {
-                final year = int.tryParse(parts[0]);
-                final month = int.tryParse(parts[1]);
-                if (year != null && month != null) {
-                  days.forEach((dayString, status) {
-                    final day = int.tryParse(dayString);
-                    if (day != null) {
-                      final date = DateTime(year, month, day);
-                      attendanceMap[date] = status;
-                    }
-                  });
-                }
-              }
-            });
-          }
+    final classRecord = studentData.classRecords[selectedClassYear!.currentYear]?[selectedClassYear!.currentClass];
+
+    if (classRecord == null) return attendanceMap;
+
+    classRecord.attendance.forEach((monthString, days) {
+      final parts = monthString.split('-');
+      if (parts.length != 2) return;
+
+      final year = int.tryParse(parts[0]);
+      final month = int.tryParse(parts[1]);
+      if (year == null || month == null) return;
+
+      days.forEach((dayString, status) {
+        final day = int.tryParse(dayString);
+        if (day != null) {
+          final date = DateTime(year, month, day);
+          attendanceMap[date] = status;
         }
-      }
-    }
+      });
+    });
+
     return attendanceMap;
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Attendance'),
+        title:  Text('Attendance'),
         centerTitle: false,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -85,39 +88,51 @@ class _AttendenceState extends State<Attendence> {
       body: Consumer<StudentProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return const Center(child: Loader());
+            return  Center(child: Loader());
           }
 
           if (provider.error != null) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding:  EdgeInsets.all(16.0),
                 child: Text(
                   "Error: ${provider.error}",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.red),
+                  style:  TextStyle(fontSize: 16, color: Colors.red),
                 ),
               ),
             );
           }
 
           if (provider.getSingleStudent.isEmpty) {
-            return const Center(
+            return  Center(
               child: Text("No student profile found.", style: TextStyle(fontSize: 16)),
             );
           }
 
-          final StudentModel student = provider.getSingleStudent.first;
+          final StudentModel studentData = provider.getSingleStudent.first;
 
-          if (_selectedClassId == null && student.classHistory.isNotEmpty) {
-            _selectedClassId = student.classHistory.last.classId;
+
+          if (selectedClassYear == null && studentData.classHistory.isNotEmpty) {
+            selectedClassYear = SelectedClassYear(
+              currentClass: studentData.classHistory.last.classId,
+              currentYear: studentData.classHistory.last.year,
+            );
+          }
+          String currentRollNo = "Not assigned";
+          ClassRecord? currentClassRecord;
+
+          if (selectedClassYear != null) {
+            currentClassRecord = studentData.classRecords[selectedClassYear!.currentYear]?[selectedClassYear!.currentClass];
+            currentRollNo = currentClassRecord?.rollNo.toString() ?? "Not assigned";
           }
 
-          final Map<DateTime, String> dynamicAttendanceMap = _parseAttendance(student);
+          final Map<DateTime, String> attendance = attendanceMap(studentData);
 
           int totalPresent = 0;
           int totalAbsent = 0;
-          dynamicAttendanceMap.values.forEach((status) {
+
+          attendance.values.forEach((status) {
             if (status == 'P') {
               totalPresent++;
             } else if (status == 'A') {
@@ -128,41 +143,28 @@ class _AttendenceState extends State<Attendence> {
           final int totalDays = totalPresent + totalAbsent;
           final double attendancePercentage = totalDays > 0 ? (totalPresent / totalDays) * 100 : 0.0;
 
-          final String? selectedYear = student.classHistory.firstWhere(
-                (h) => h.classId == _selectedClassId,
-            orElse: () => ClassHistory(year: '', classId: '', result: ''),
-          ).year;
-
-          String rollNumber = 'N/A';
-          if (selectedYear != null && selectedYear.isNotEmpty && student.classRecords.containsKey(selectedYear)) {
-            final classRecord = student.classRecords[selectedYear]?[_selectedClassId];
-            if (classRecord != null) {
-              rollNumber = classRecord.rollNo.toString();
-            }
-          }
-
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding:  EdgeInsets.all(16.0),
             children: [
-              _buildClassAndRollHeader(student, rollNumber),
-              const SizedBox(height: 20),
+              _buildClassAndRollHeader(studentData, currentRollNo),
+               SizedBox(height: 20),
               Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding:  EdgeInsets.all(8.0),
                   child: TableCalendar(
-                    firstDay: Date.stringToDateTime(student.admissionDate),
+                    firstDay: Date.stringToDateTime(studentData.admissionDate),
                     lastDay: Date.getCurrentDate(),
                     focusedDay: Date.getCurrentDate(),
-                    calendarStyle: const CalendarStyle(
+                    calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
                         color: Colors.blueAccent,
                         shape: BoxShape.circle,
                       ),
                       todayTextStyle: TextStyle(color: Colors.white),
                     ),
-                    headerStyle: const HeaderStyle(
+                    headerStyle:  HeaderStyle(
                       formatButtonVisible: false,
                       titleCentered: true,
                       titleTextStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -170,7 +172,7 @@ class _AttendenceState extends State<Attendence> {
                     calendarBuilders: CalendarBuilders(
                       defaultBuilder: (context, day, focusedDay) {
                         final normalizedDay = DateTime(day.year, day.month, day.day);
-                        final status = dynamicAttendanceMap[normalizedDay];
+                        final status = attendance[normalizedDay];
                         if (status == 'P') {
                           return _buildAttendanceCell(day, Colors.green);
                         } else if (status == 'A') {
@@ -182,12 +184,12 @@ class _AttendenceState extends State<Attendence> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+               SizedBox(height: 24),
+               Text(
                 'Attendance Statistics',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
+               SizedBox(height: 16),
               _buildStatsWrap(
                 context,
                 totalPresent,
@@ -207,22 +209,22 @@ class _AttendenceState extends State<Attendence> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding:  EdgeInsets.all(16.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(child: _buildClassSelectorDropdown(student)),
-            const SizedBox(width: 16),
+             SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                const Text(
+                 Text(
                   'Roll No.',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 Text(
                   rollNumber,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style:  TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -232,26 +234,41 @@ class _AttendenceState extends State<Attendence> {
     );
   }
 
-  Widget _buildClassSelectorDropdown(StudentModel student) {
-    return DropdownButtonFormField<String>(
-      value: _selectedClassId,
+  Widget _buildClassSelectorDropdown(StudentModel studentData) {
+    return DropdownButtonFormField<SelectedClassYear>(
+      value: selectedClassYear,
       decoration: InputDecoration(
         labelText: 'Select Class',
         fillColor: Colors.white,
         filled: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        labelStyle: TextStyle(color: primaryColor),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        contentPadding:  EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
-      items: student.classHistory.map((classData) {
-        return DropdownMenuItem<String>(
-          value: classData.classId,
+      items: studentData.classHistory.map((classData) {
+        final selection = SelectedClassYear(
+          currentClass: classData.classId,
+          currentYear: classData.year,
+        );
+        return DropdownMenuItem<SelectedClassYear>(
+          value: selection,
           child: Text("Class ${classData.classId} (${classData.year})"),
         );
-      }).toList().reversed.toList(),
-      onChanged: (String? newValue) {
+      }).toList(),
+      onChanged: (SelectedClassYear? newValue) {
         if (newValue != null) {
           setState(() {
-            _selectedClassId = newValue;
+            selectedClassYear = newValue;
           });
         }
       },
@@ -270,7 +287,7 @@ class _AttendenceState extends State<Attendence> {
         alignment: Alignment.center,
         child: Text(
           '${day.day}',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -278,8 +295,8 @@ class _AttendenceState extends State<Attendence> {
 
   Widget _buildStatsWrap(BuildContext context, int present, int absent, int total, double percentage) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    const double horizontalPadding = 16.0 * 2;
-    const double cardSpacing = 12.0;
+     double horizontalPadding = 16.0 * 2;
+     double cardSpacing = 12.0;
     final double cardWidth = (screenWidth - horizontalPadding - cardSpacing) / 2;
 
     return Wrap(
@@ -336,16 +353,16 @@ class _AttendenceState extends State<Attendence> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Icon(icon, color: color, size: 30),
-            const SizedBox(height: 16),
+             SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                 SizedBox(height: 2),
                 Text(
                   label,
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
@@ -363,7 +380,7 @@ class _AttendenceState extends State<Attendence> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -385,15 +402,15 @@ class _AttendenceState extends State<Attendence> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${percentage.toStringAsFixed(1)}%',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 2),
+                 SizedBox(height: 2),
                 Text(
                   label,
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 14),

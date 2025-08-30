@@ -2,10 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:model/class/class_model.dart';
+import 'package:model/coman/selected_class_year.dart';
 import 'package:provider/provider.dart';
 import 'package:model/student/classrecord_model.dart';
 import 'package:model/student/student_model.dart';
-import 'package:model/coman/class_selection.dart';
 import 'package:student/backend/class/class_controller.dart';
 import 'package:student/backend/class/class_provider.dart';
 import 'package:student/backend/student/student_controller.dart';
@@ -23,38 +23,36 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
-  int classFee = 0;
-  ClassSelection? selectedClassId;
-  ClassRecord? currentClassRecord;
 
-  StudentProvider? studentProvider;
-  StudentController? studentController;
+  SelectedClassYear? selectedClassYear;
 
-  ClassProvider? classProvider;
-  ClassController? classController;
-
+  late StudentProvider studentProvider;
+  late StudentController studentController;
+  late ClassProvider classProvider;
+  late ClassController classController;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      getStudentData();
+      loadStudentAndClassData();
     });
   }
 
-  void getStudentData() {
-    studentProvider = Provider.of<StudentProvider>(context, listen: false);
-    studentController = StudentController(studentProvider!);
+  void loadStudentAndClassData() {
 
-    if (studentProvider!.getSingleStudent.isEmpty && currentUserId != null) {
-      studentController!.getSingleStudent(studentId: currentUserId!);
+    studentProvider = Provider.of<StudentProvider>(context, listen: false);
+    studentController = StudentController(studentProvider);
+
+    if (studentProvider.getSingleStudent.isEmpty && currentUserId != null) {
+      studentController.fetchSingleStudent(studentId: currentUserId!);
     }
 
     classProvider = Provider.of<ClassProvider>(context, listen: false);
-    classController = ClassController(classProvider!);
+    classController = ClassController(classProvider);
 
-    if (classProvider!.getclassdata.isEmpty) {
-      classController!.getAllClass();
+    if (classProvider.getclassdata.isEmpty) {
+      classController.fetchAllClass();
     }
   }
 
@@ -66,69 +64,68 @@ class _ProfileState extends State<Profile> {
       body: Consumer2<StudentProvider, ClassProvider>(
         builder: (context, studentProvider,classProvider, child) {
           if (studentProvider.isLoading) {
-            return const Center(child: Loader());
+            return  Center(child: Loader());
           }
 
           if (studentProvider.error != null) {
             return Center(
               child: Text(
                 studentProvider.error!,
-                style: const TextStyle(fontSize: 16, color: Colors.red),
+                style:  TextStyle(fontSize: 16, color: Colors.red),
                 textAlign: TextAlign.center,
               ),
             );
           }
 
           if (studentProvider.getSingleStudent.isEmpty) {
-            return const Center(child: Text("No student data found"));
+            return  Center(child: Text("No student data found"));
           }
 
-          final StudentModel student = studentProvider.getSingleStudent.first;
-
-          if (selectedClassId == null && student.classHistory.isNotEmpty) {
-            selectedClassId = ClassSelection(
-              classId: student.classHistory.last.classId,
-              year: student.classHistory.last.year,
-            );
-          }
+          final StudentModel studentData = studentProvider.getSingleStudent.first;
 
           final List<ClassModel> classData = classProvider.getclassdata;
 
-          if (selectedClassId != null && classData != null) {
-            final selectedYear = selectedClassId!.year;
+          if (selectedClassYear == null && studentData.classHistory.isNotEmpty) {
+            selectedClassYear = SelectedClassYear(
+              currentClass: studentData.classHistory.last.classId,
+              currentYear: studentData.classHistory.last.year,
+            );
+          }
 
-            final classModelForYear = classData!.firstWhere(
-              (c) => c.id == selectedYear,
-              orElse: () => ClassModel(id: selectedYear, classes: {}),
+          int currentTotlaFee = 0;
+          String currentRollNo = "Not assigned";
+          ClassRecord? currentClassRecord;
+
+          if (selectedClassYear != null) {
+            final classByYear = classData.firstWhere(
+                  (c) => c.id == selectedClassYear!.currentYear,
+              orElse: () =>
+                  ClassModel(id: selectedClassYear!.currentYear, classes: {}),
             );
 
-            classFee = classModelForYear.classes[selectedClassId!.classId]?.fee ?? 0;
-          }
+            currentTotlaFee = classByYear.classes[selectedClassYear!.currentClass]?.fee ?? 0;
 
-          if (selectedClassId != null) {
-            currentClassRecord = student
-                .classRecords[selectedClassId?.year]?[selectedClassId?.classId];
-          }
+            currentClassRecord = studentData.classRecords[selectedClassYear!.currentYear]?[selectedClassYear!.currentClass];
 
-          final String rollNo =
-              currentClassRecord?.rollNo.toString() ?? "Not assigned";
+            currentRollNo = currentClassRecord?.rollNo.toString() ?? "Not assigned";
+          }
 
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding:  EdgeInsets.all(16),
             children: [
-              _buildProfileHeader(student),
-              const SizedBox(height: 24),
-              if (student.classHistory.isNotEmpty) ...[
-                _buildClassSelectorDropdown(student),
-                const SizedBox(height: 16),
+              _buildProfileHeader(studentData),
+               SizedBox(height: 24),
+              if (studentData.classHistory.isNotEmpty) ...[
+                _buildClassSelectorDropdown(studentData),
+                 SizedBox(height: 16),
               ],
-              _buildFeeStatusCard(currentClassRecord),
-              const SizedBox(height: 16),
-              _buildAcademicInfoCard(student, rollNo),
-              const SizedBox(height: 16),
-              _buildPersonalInfoCard(student),
-              const SizedBox(height: 16),
-              _buildContactInfoCard(student),
+              _buildFeeStatusCard(currentClassRecord,currentTotlaFee),
+               SizedBox(height: 16),
+              _buildAcademicInfoCard(studentData, currentRollNo),
+               SizedBox(height: 16),
+              _buildPersonalInfoCard(studentData),
+               SizedBox(height: 16),
+              _buildContactInfoCard(studentData),
             ],
           );
         },
@@ -141,7 +138,7 @@ class _ProfileState extends State<Profile> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding:  EdgeInsets.all(20),
         child: Column(
           children: [
             CircleAvatar(
@@ -154,7 +151,7 @@ class _ProfileState extends State<Profile> {
                   ? Icon(Icons.person, size: 50, color: primaryColor)
                   : null,
             ),
-            const SizedBox(height: 16),
+             SizedBox(height: 16),
             Text(
               student.name,
               style: TextStyle(
@@ -164,17 +161,17 @@ class _ProfileState extends State<Profile> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            if (selectedClassId != null)
+             SizedBox(height: 8),
+            if (selectedClassYear != null)
               Chip(
-                label: Text("Class: $selectedClassId"),
+                label: Text("Class ${selectedClassYear!.currentClass} (${selectedClassYear!.currentYear})"),
                 backgroundColor: primaryColor.withOpacity(0.1),
                 labelStyle: TextStyle(
                   color: primaryColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            const SizedBox(height: 8),
+             SizedBox(height: 8),
             Text(
               "Admission No: ${student.id}",
               style: TextStyle(fontSize: 14, color: secondaryTextColor),
@@ -186,8 +183,8 @@ class _ProfileState extends State<Profile> {
   }
 
   Widget _buildClassSelectorDropdown(StudentModel studentData) {
-    return DropdownButtonFormField<ClassSelection>(
-      value: selectedClassId,
+    return DropdownButtonFormField<SelectedClassYear>(
+      value: selectedClassYear,
       decoration: InputDecoration(
         labelText: 'Select Class',
         fillColor: Colors.white,
@@ -201,37 +198,37 @@ class _ProfileState extends State<Profile> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(
+        contentPadding:  EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 12,
         ),
       ),
       items: studentData.classHistory.map((classData) {
-        final selection = ClassSelection(
-          classId: classData.classId,
-          year: classData.year,
+        final selection = SelectedClassYear(
+          currentClass: classData.classId,
+          currentYear: classData.year,
         );
-        return DropdownMenuItem<ClassSelection>(
+        return DropdownMenuItem<SelectedClassYear>(
           value: selection,
           child: Text("Class ${classData.classId} (${classData.year})"),
         );
       }).toList(),
-      onChanged: (ClassSelection? newValue) {
+      onChanged: (SelectedClassYear? newValue) {
         if (newValue != null) {
           setState(() {
-            selectedClassId = newValue;
+            selectedClassYear = newValue;
           });
         }
       },
     );
   }
 
-  Widget _buildFeeStatusCard(ClassRecord? classRecord) {
+  Widget _buildFeeStatusCard(ClassRecord? classRecord,int totalFee) {
     if (classRecord == null) {
       return Card(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: const Padding(
+        child:  Padding(
           padding: EdgeInsets.all(16.0),
           child: Text("No fee data available for this class."),
         ),
@@ -241,8 +238,6 @@ class _ProfileState extends State<Profile> {
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
     final feeStatus = classRecord.feeStatus;
 
-    // final totalFee = _classFee > 0 ? _classFee : (feeStatus.paid + feeStatus.due);
-    final totalFee = classFee;
     final double paidPercentage = totalFee > 0
         ? feeStatus.paid / totalFee
         : 0.0;
@@ -251,7 +246,7 @@ class _ProfileState extends State<Profile> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -264,10 +259,10 @@ class _ProfileState extends State<Profile> {
               ),
             ),
             Text(
-              "Status for Class: $selectedClassId",
-              style: TextStyle(fontSize: 14, color: secondaryTextColor),
+                "Status for Class: ${selectedClassYear!.currentClass} (${selectedClassYear!.currentYear})",
+                style: TextStyle(fontSize: 14, color: secondaryTextColor),
             ),
-            const Divider(height: 24),
+             Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -289,7 +284,7 @@ class _ProfileState extends State<Profile> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+             SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
@@ -299,12 +294,12 @@ class _ProfileState extends State<Profile> {
                 valueColor: AlwaysStoppedAnimation<Color>(successColor),
               ),
             ),
-            const SizedBox(height: 8),
+             SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
               child: Text('Total Fees: ${currencyFormat.format(totalFee)}'),
             ),
-            const Divider(height: 24),
+             Divider(height: 24),
             Text(
               "Payment History",
               style: TextStyle(
@@ -313,10 +308,10 @@ class _ProfileState extends State<Profile> {
                 color: primaryTextColor,
               ),
             ),
-            const SizedBox(height: 8),
+             SizedBox(height: 8),
             if (classRecord.feePayments.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
                   "No payments made for this class yet.",
                   style: TextStyle(color: secondaryTextColor),
@@ -347,7 +342,7 @@ class _ProfileState extends State<Profile> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -359,7 +354,7 @@ class _ProfileState extends State<Profile> {
                 color: primaryTextColor,
               ),
             ),
-            const Divider(height: 20),
+            Divider(height: 20),
             ...children,
           ],
         ),
@@ -438,7 +433,7 @@ class _ProfileState extends State<Profile> {
       leading: Icon(icon, color: primaryColor, size: 24),
       title: Text(
         title,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
       ),
       subtitle: Text(
         value.isNotEmpty ? value : 'Not available',

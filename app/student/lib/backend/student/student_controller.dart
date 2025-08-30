@@ -8,7 +8,7 @@ class StudentController {
 
   StudentController(this.studentProvider);
 
-  Future<StudentModel?> getSingleStudent({required String studentId}) async {
+  Future<StudentModel?> fetchSingleStudent({required String studentId}) async {
     studentProvider.setLoading(true);
     try {
       final doc = await _studentCollection.doc(studentId).get();
