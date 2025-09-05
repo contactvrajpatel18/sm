@@ -11,6 +11,17 @@ class StudentProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  void addStudents(List<StudentModel> students) {
+    for (var student in students) {
+      if (!_student.any((s) => s.id == student.id)) {
+        _student.add(student);
+      }
+    }
+    notifyListeners();
+  }
+
+
+
   void setSingleStudent(List<StudentModel> student) {
     _student = student;
     _error = null;

@@ -7,12 +7,12 @@ class TeacherProvider with ChangeNotifier {
   List<TeacherModel> _teacher = [];
   bool _isLoading = false;
   String? _error;
-  List<StudentModel> _selectedClassStudents = [];
+  // List<StudentModel> _selectedClassStudents = [];
 
-  List<TeacherModel> get getteacherdata => UnmodifiableListView(_teacher);
+  List<TeacherModel> get getSingleTeacher => UnmodifiableListView(_teacher);
   bool get isLoading => _isLoading;
   String? get error => _error;
-  List<StudentModel> get selectedClassStudents => UnmodifiableListView(_selectedClassStudents); // This getter exposes the student data
+  // List<StudentModel> get selectedClassStudents => UnmodifiableListView(_selectedClassStudents); // This getter exposes the student data
 
   void setTeacher(List<TeacherModel> setteacher) {
     _teacher = setteacher;
@@ -28,19 +28,19 @@ class TeacherProvider with ChangeNotifier {
   void setError(String errorMessage) {
     _error = errorMessage;
     _teacher = [];
-    _selectedClassStudents = [];
+    // _selectedClassStudents = [];
     notifyListeners();
   }
 
   void clearData() {
     _teacher = [];
     _error = null;
-    _selectedClassStudents = [];
+    // _selectedClassStudents = [];
   }
 
-  void setSelectedClassStudents(List<StudentModel> students) {
-    _selectedClassStudents = students;
-    notifyListeners();
-  }
+  // void setSelectedClassStudents(List<StudentModel> students) {
+  //   _selectedClassStudents = students;
+  //   notifyListeners();
+  // }
 
 }

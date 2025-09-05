@@ -1,56 +1,108 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:model/class/class_info_model.dart';
 import 'package:model/class/class_model.dart';
 
 import 'class_provider.dart';
 
 class ClassController {
+  final ClassProvider classProvider;
   final _classCollection = FirebaseFirestore.instance.collection('classes');
 
-  Future<ClassModel?> getClassById(String classId) async {
+  ClassController(this.classProvider);
+
+  Future<List<ClassModel>?> fetchAllClass() async {
+    classProvider.setLoading(true);
     try {
-      final doc = await _classCollection.doc(classId).get();
-      if (doc.exists && doc.data() != null) {
-        return ClassModel.fromMap(doc.data()!);
+      final snapshot = await _classCollection.get();
+
+      if (snapshot.docs.isEmpty) {
+        print("❌ No Firestore documents found in class collection");
+        classProvider.setError("data not found.");
+        return null;
       }
-      return null;
+
+      final years = snapshot.docs
+          .map((doc) => ClassModel.fromMap(doc.data()))
+          .toList();
+
+      classProvider.setClassData(years);
+      // print("✅ getAllClass() : ${years}");
+      return years;
     } catch (e) {
-      print('Error fetching class data: $e');
+      print("🔥 Error getAllClass : $e");
+      classProvider.setError("Failed to load data. Please try again.");
       return null;
+    } finally {
+      classProvider.setLoading(false);
     }
   }
 
-  Future<ClassModel?> getClassByYear(String year) async {
+  Future<ClassModel?> fetchClassByYear({required String year}) async {
+    classProvider.setLoading(true);
     try {
       final doc = await _classCollection.doc(year).get();
-      if (doc.exists && doc.data() != null) {
-        // The data is directly a map of class IDs to ClassInfo
-        return ClassModel.fromMap(doc.data()!);
+      if (!doc.exists) {
+        print("❌ No Firestore document found for year $year");
+        classProvider.setError("data not found.");
+        return null;
       }
-      return null;
+      final yearData = ClassModel.fromMap(doc.data()!);
+      classProvider.setClassData([yearData]);
+      print("✅ getClassByYear($year) : ${yearData}");
+      return yearData;
     } catch (e) {
-      print('Error fetching class data: $e');
+      print("🔥 Error getClassByYear : $e");
+      classProvider.setError("Failed to load data. Please try again.");
       return null;
-    }
-  }
-
-
-
-
-  Future<void> readClassDats(String classId, ClassProvider classprovider) async {
-    classprovider.setLoading(true);
-    try {
-      final doc = await _classCollection.doc(classId).get();
-
-      if (doc.exists && doc.data() != null) {
-        final ClassData = ClassModel.fromMap(doc.data()!);
-        classprovider.setClassData([ClassData]);
-      } else {
-        classprovider.setError('Class Data not found.');
-      }
-    } catch (e) {
-      classprovider.setError('Failed to load Data. Please try again.');
     } finally {
-      classprovider.setLoading(false);
+      classProvider.setLoading(false);
     }
   }
+
+
+  Future<ClassModel?> addFetchClassByYear({required String year}) async {
+    classProvider.setLoading(true);
+    try {
+      final exists = classProvider.getclassdata
+          .any((classModel) => classModel.id == year);
+
+      if (!exists) {
+        final doc = await _classCollection.doc(year).get();
+
+        if (doc.exists) {
+          final yearData = ClassModel.fromMap(doc.data()!);
+
+          classProvider.addClass(yearData);
+          // print("✅ getClassByYear($year) : ${yearData}");
+          return yearData;
+        } else {
+          print("❌ No Firestore document found for year $year");
+          classProvider.setError("Data not found.");
+          return null;
+        }
+      } else {
+        print("⚠️ Year $year already exists, skipping fetch...");
+        return classProvider.getclassdata
+            .firstWhere((classModel) => classModel.id == year);
+      }
+    } catch (e) {
+      print("🔥 Error getClassByYear : $e");
+      classProvider.setError("Failed to load data. Please try again.");
+      return null;
+    } finally {
+      classProvider.setLoading(false);
+    }
+  }
+
 }
+
+
+
+
+
+
+
+
+
+
+

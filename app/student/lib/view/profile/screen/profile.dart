@@ -45,7 +45,7 @@ class _ProfileState extends State<Profile> {
     studentController = StudentController(studentProvider);
 
     if (studentProvider.getSingleStudent.isEmpty && currentUserId != null) {
-      studentController.fetchSingleStudent(studentId: currentUserId!);
+      studentController.fetchSingleStudentById(studentId: currentUserId!);
     }
 
     classProvider = Provider.of<ClassProvider>(context, listen: false);
@@ -78,7 +78,7 @@ class _ProfileState extends State<Profile> {
           }
 
           if (studentProvider.getSingleStudent.isEmpty) {
-            return  Center(child: Text("No student data found"));
+            return  Center(child: Text("No data found"));
           }
 
           final StudentModel studentData = studentProvider.getSingleStudent.first;
@@ -116,6 +116,7 @@ class _ProfileState extends State<Profile> {
               _buildProfileHeader(studentData),
                SizedBox(height: 24),
               if (studentData.classHistory.isNotEmpty) ...[
+                _buildClassSelectorDropdown(studentData),
                 _buildClassSelectorDropdown(studentData),
                  SizedBox(height: 16),
               ],

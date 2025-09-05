@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:collection';
+
 import 'package:model/class/class_model.dart';
 
 class ClassProvider with ChangeNotifier {
@@ -10,6 +11,13 @@ class ClassProvider with ChangeNotifier {
   List<ClassModel> get getclassdata => UnmodifiableListView(_classData);
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+
+  void addClass(ClassModel classModel) {
+      _classData.add(classModel);
+      _error = null;
+      notifyListeners();
+  }
 
   void setClassData(List<ClassModel> setclassdata) {
     _classData = setclassdata;

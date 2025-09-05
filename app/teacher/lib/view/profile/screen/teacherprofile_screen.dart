@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:teacher/backend/teacher/teacher_controller.dart';
 import 'package:teacher/backend/teacher/teacher_provider.dart';
 import 'package:teacher/view/common/appbar_common.dart';
+import 'package:teacher/view/common/colors.dart';
 
 class TeacherProfileScreen extends StatefulWidget {
   const TeacherProfileScreen({super.key});
@@ -15,41 +16,34 @@ class TeacherProfileScreen extends StatefulWidget {
 }
 
 class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
-  final Color primaryColor = const Color(0xFF6A5ACD); // Slate Blue
-  final Color primaryTextColor = const Color(0xFF333333); // Dark Grey
-  final Color secondaryTextColor = const Color(0xFF6c757d); // Muted Grey
-  final Color successColor = const Color(0xFF28a745); // Green
-  final Color errorColor = const Color(0xFFDC3545); // Red
-  final Color screenBackground = const Color(0xfff5f7fa); // Light Greyish Blue
-
-  final TeacherController teacherController = TeacherController();
-  final String? teacherId = FirebaseAuth.instance.currentUser?.uid;
+  final String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  late TeacherProvider teacherProvider;
+  late TeacherController teacherController;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<TeacherProvider>(context, listen: false);
-
-      if (provider.getteacherdata.isEmpty && teacherId != null) {
-        teacherController.readTeacher(teacherId!, provider);
-      }
+      loadTeacherData();
     });
   }
 
-  // Helper method to format the assigned classes map into a readable string
-  String _formatAssignedClasses(Map<String, List<String>> assignedClasses) {
-    if (assignedClasses.isEmpty) {
-      return 'No classes assigned.';
+  void loadTeacherData() {
+
+    teacherProvider = Provider.of<TeacherProvider>(context, listen: false);
+    teacherController = TeacherController(teacherProvider);
+
+    if (teacherProvider.getSingleTeacher.isEmpty && currentUserId != null) {
+      teacherController.fetchSingleTeacher(teacherId: currentUserId!);
     }
+  }
 
-    final formattedEntries = assignedClasses.entries.map((entry) {
-      final year = entry.key;
-      final classes = entry.value.join(', ');
-      return '$year: $classes';
-    }).toList();
+  String formatAssignedClasses(Map<String, List<String>> assignedClasses) {
+    if (assignedClasses.isEmpty) return 'No classes assigned.';
 
-    return formattedEntries.join('\n');
+    return assignedClasses.entries
+        .map((e) => "${e.key} : ${e.value.isNotEmpty ? e.value.join(', ') : 'None'}")
+        .join('\n');
   }
 
   @override
@@ -58,18 +52,28 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
       backgroundColor: screenBackground,
       appBar: AppbarCommon("Teacher Profile", showBack: true),
       body: Consumer<TeacherProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
+        builder: (context, teacherProvider, child) {
+          if (teacherProvider.isLoading) {
             return const Center(child: Loader());
           }
 
-          if (provider.getteacherdata.isEmpty) {
-            return const Center(
-              child: Text("No Teacher Data Found.", style: TextStyle(fontSize: 16)),
+          if (teacherProvider.error != null) {
+            return Center(
+              child: Text(
+                teacherProvider.error!,
+                style: TextStyle(fontSize: 16, color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
             );
           }
 
-          final TeacherModel teacherData = provider.getteacherdata.first;
+          if (teacherProvider.getSingleTeacher.isEmpty) {
+            return const Center(
+              child: Text("No Data Found.", style: TextStyle(fontSize: 16)),
+            );
+          }
+
+          final TeacherModel teacherData = teacherProvider.getSingleTeacher.first;
 
           return ListView(
             padding: const EdgeInsets.all(16.0),
@@ -191,7 +195,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
         _buildInfoTile(
           icon: Icons.class_outlined,
           title: "Assigned Classes",
-          value: _formatAssignedClasses(teacherData.assignedClasses), // Use the new helper method
+          value: formatAssignedClasses(teacherData.assignedClasses),
           isMultiLine: true,
         ),
       ],

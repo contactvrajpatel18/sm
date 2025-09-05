@@ -1,5 +1,5 @@
 class SelectedClassYear {
-  final String currentClass;
+  late final String currentClass;
   final String currentYear;
 
   SelectedClassYear({required this.currentClass, required this.currentYear});

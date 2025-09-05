@@ -40,7 +40,7 @@ class _AttendenceState extends State<Attendence> {
     studentController = StudentController(studentProvider);
 
     if (studentProvider.getSingleStudent.isEmpty && currentUserId != null) {
-      studentController.fetchSingleStudent(studentId: currentUserId!);
+      studentController.fetchSingleStudentById(studentId: currentUserId!);
     }
   }
 
