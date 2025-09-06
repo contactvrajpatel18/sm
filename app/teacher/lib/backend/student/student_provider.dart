@@ -3,12 +3,11 @@ import 'dart:collection';
 import 'package:model/student/student_model.dart';
 
 class StudentProvider with ChangeNotifier {
-  // ✅ Store students class-wise and year-wise
+
   final Map<String, List<StudentModel>> _studentsByClass = {};
   bool _isLoading = false;
   String? _error;
 
-  // ✅ Get students of a specific class & year
   List<StudentModel> getStudents(String classId, String year) {
     final key = "${year}_$classId";
     return UnmodifiableListView(_studentsByClass[key] ?? []);
@@ -17,7 +16,6 @@ class StudentProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // ✅ Add students dynamically for a specific class & year
   void addStudents(List<StudentModel> students, String classId, String year) {
     final key = "${year}_$classId";
     _studentsByClass.putIfAbsent(key, () => []);
@@ -30,7 +28,6 @@ class StudentProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Set students for a specific class & year
   void setStudents(List<StudentModel> students, String classId, String year) {
     final key = "${year}_$classId";
     _studentsByClass[key] = students;

@@ -117,7 +117,6 @@ class _ProfileState extends State<Profile> {
                SizedBox(height: 24),
               if (studentData.classHistory.isNotEmpty) ...[
                 _buildClassSelectorDropdown(studentData),
-                _buildClassSelectorDropdown(studentData),
                  SizedBox(height: 16),
               ],
               _buildFeeStatusCard(currentClassRecord,currentTotlaFee),

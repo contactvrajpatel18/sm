@@ -8,60 +8,9 @@ class StudentController {
 
   StudentController(this.studentProvider);
 
-  // Future<List<StudentModel>?> addFetchStudentsByIds(List<String> ids) async {
-  //   studentProvider.setLoading(true);
-  //   try {
-  //
-  //     print("🔍 Requested IDs: $ids");
-  //     // ✅ Get already loaded students
-  //     final existingStudents = studentProvider.getSingleStudent;
-  //
-  //     print("📚 Existing Students in Provider: $existingStudents");
-  //     // ✅ Find which IDs are already present
-  //     final existingIds = existingStudents.map((s) => s.id).toSet();
-  //
-  //     print("🔍 Existing IDs in Provider: $existingIds");
-  //     final missingIds = ids.where((id) => !existingIds.contains(id)).toList();
-  //
-  //     print("🆕 Missing IDs to fetch: $missingIds");
-  //     List<StudentModel> fetchedStudents = [];
-  //     print("fetchedStudents : ${fetchedStudents}");
-  //
-  //     if (missingIds.isNotEmpty) {
-  //       // ✅ Fetch only missing ones
-  //       final futures = missingIds.map((id) => _studentCollection.doc(id).get());
-  //       final snapshots = await Future.wait(futures);
-  //
-  //       fetchedStudents = snapshots
-  //           .where((doc) => doc.exists && doc.data() != null)
-  //           .map((doc) => StudentModel.fromMap(doc.data()!))
-  //           .toList();
-  //
-  //
-  //       // ✅ Add new students to provider (merge with existing ones)
-  //       studentProvider.addStudents(fetchedStudents);
-  //     } else {
-  //       print("⚠️ All students already exist, skipping fetch...");
-  //     }
-  //
-  //     // ✅ Return all requested students (existing + fetched)
-  //     final result = studentProvider.getSingleStudent
-  //         .where((s) => ids.contains(s.id))
-  //         .toList();
-  //
-  //     print("✅ getSingleStudent() : $result");
-  //     return result;
-  //   } catch (e) {
-  //     print("🔥 Error fetchStudentsByIds : $e");
-  //     studentProvider.setError("Failed to load data. Please try again.");
-  //     return null;
-  //   } finally {
-  //     studentProvider.setLoading(false);
-  //   }
-  // }
-
   Future<List<StudentModel>?> addFetchStudentsByIds(
-      List<String> ids, {
+       {
+         required List<String> ids,
         required String classId,
         required String year,
       }) async {
@@ -70,34 +19,31 @@ class StudentController {
       final existingStudents = studentProvider.getStudents(classId, year);
       print("📚 Existing Students in Provider [$classId-$year]: $existingStudents");
 
-      List<StudentModel> fetchedStudents = [];
-
-      if (existingStudents.isEmpty) {
-        // ✅ Fetch only missing ones
-        final futures = ids.map((id) => _studentCollection.doc(id).get());
-        final snapshots = await Future.wait(futures);
-
-        fetchedStudents = snapshots
-            .where((doc) => doc.exists && doc.data() != null)
-            .map((doc) => StudentModel.fromMap(doc.data()!))
-            .toList();
-
-        // ✅ Save fetched students into provider for this class + year
-        studentProvider.setStudents(fetchedStudents, classId, year);
-      } else {
-        print("⚠️ All students already exist, skipping fetch...");
+      if (existingStudents.isNotEmpty) {
+        print("⚠️ All students already exist for [$classId-$year], skipping fetch...");
+        return null;
       }
 
-      // ✅ Return all requested students (from provider after update)
-      final result = studentProvider
-          .getStudents(classId, year)
-          .where((s) => ids.contains(s.id))
+      final futures = ids.map((id) => _studentCollection.doc(id).get());
+      final snapshots = await Future.wait(futures);
+
+      final fetchedStudents = snapshots
+          .where((doc) => doc.exists && doc.data() != null)
+          .map((doc) => StudentModel.fromMap(doc.data()!))
           .toList();
 
-      // print("✅ Final students for [$classId-$year]: $result");
-      return result;
+      if (fetchedStudents.isEmpty) {
+        print("❌ No Firestore documents found for given IDs");
+        studentProvider.setError("data not found.");
+        return null;
+      }
+
+      studentProvider.setStudents(fetchedStudents, classId, year);
+      // print("✅ addFetchStudentsByIds($classId-$year) : $fetchedStudents");
+      return null;
+
     } catch (e) {
-      print("🔥 Error fetchStudentsByIds : $e");
+      print("🔥 Error addFetchStudentsByIds : $e");
       studentProvider.setError("Failed to load data. Please try again.");
       return null;
     } finally {
@@ -106,54 +52,5 @@ class StudentController {
   }
 
 
-  // Future<List<StudentModel>?> fetchStudentsByIds(List<String> ids) async {
-  //   studentProvider.setLoading(true);
-  //   try {
-  //     final futures = ids.map((id) => _studentCollection.doc(id).get());
-  //     final snapshots = await Future.wait(futures);
-  //
-  //     final students = snapshots
-  //         .where((doc) => doc.exists && doc.data() != null)
-  //         .map((doc) => StudentModel.fromMap(doc.data()!))
-  //         .toList();
-  //
-  //     studentProvider.setSingleStudent(students);
-  //
-  //     print("✅ getSingleStudent() : $students");
-  //     return students;
-  //   } catch (e) {
-  //     print("🔥 Error fetchStudentsByIds : $e");
-  //     studentProvider.setError("Failed to load data. Please try again.");
-  //     return null;
-  //   } finally {
-  //     studentProvider.setLoading(false);
-  //   }
-  // }
-
-
-
-  // Future<StudentModel?> fetchSingleStudentById({required String studentId}) async {
-  //   studentProvider.setLoading(true);
-  //   try {
-  //     final doc = await _studentCollection.doc(studentId).get();
-  //
-  //     if (!doc.exists || doc.data() == null) {
-  //       print("❌ No Firestore document found for studentId: $studentId");
-  //       studentProvider.setError("data not found.");
-  //       return null;
-  //     }
-  //
-  //     final studentData = StudentModel.fromMap(doc.data()!);
-  //     studentProvider.setSingleStudent([studentData]);
-  //     // print("✅ getSingleStudent() : $studentData");
-  //     return studentData;
-  //   } catch (e) {
-  //     print("🔥 Error getSingleStudent : $e");
-  //     studentProvider.setError("Failed to load data. Please try again.");
-  //     return null;
-  //   } finally {
-  //     studentProvider.setLoading(false);
-  //   }
-  // }
 
 }

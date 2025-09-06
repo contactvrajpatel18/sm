@@ -78,11 +78,11 @@ class ClassController {
       }
 
       final classInfo = ClassInfo.fromMap(Map<String, dynamic>.from(data[className]));
-      // print("✅ getClassByYearAndName($year,$className) : $classInfo");
+      // print("✅ fetchClassByYearAndName($year,$className) : $classInfo");
       return classInfo;
 
     } catch (e) {
-      print("🔥 Error getClassByYearAndName : $e");
+      print("🔥 Error fetchClassByYearAndName : $e");
       classProvider.setError("Failed to load data. Please try again.");
       return null;
     } finally {

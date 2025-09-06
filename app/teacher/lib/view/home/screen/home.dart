@@ -58,21 +58,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void loadInitialClass(TeacherModel teacher) {
-    final firstYear = teacher.assignedClasses.keys.first;
-    final firstClassId = teacher.assignedClasses[firstYear]!.first;
+    final year = teacher.assignedClasses.keys.first;
+    final classId = teacher.assignedClasses[year]!.first;
     setState(() {
       selectedClassYear = SelectedClassYear(
-        currentClass: firstClassId,
-        currentYear: firstYear,
+        currentClass: classId,
+        currentYear: year,
       );
     });
-
-    loadStudentsForClass(firstClassId, firstYear);
+    loadStudentsForClass(classId, year);
   }
 
   Future<void> loadStudentsForClass(String classId, String year) async {
-    teacherProvider.setLoading(true);
     try {
+      studentProvider.setLoading(true);
       await classController.addFetchClassByYear(year: year);
 
       if (classProvider.getclassdata.isNotEmpty) {
@@ -82,27 +81,27 @@ class _HomeScreenState extends State<HomeScreen> {
             .firstOrNull;
 
         if (classByYear == null) {
-          teacherProvider.setError("No data found for year $year");
-          return;
+          teacherProvider.setError("data not found.");
+          return null;
         }
 
         final studentIds = classByYear.classes[classId]?.students;
         if (studentIds == null || studentIds.isEmpty) {
-          teacherProvider.setError("No students found for class $classId in $year");
-          return;
+          teacherProvider.setError("data not found.");
+          return null;
         }
-
-        // ✅ Pass classId & year when fetching students
         await studentController.addFetchStudentsByIds(
-          studentIds,
+          ids: studentIds,
           classId: classId,
           year: year,
         );
       }
     } catch (e) {
-      teacherProvider.setError("Failed to load students: $e");
+      print("🔥 Error loadStudentsForClass : $e");
+      teacherProvider.setError("Failed to load data. Please try again.");
     } finally {
-      teacherProvider.setLoading(false);
+      studentProvider.setLoading(false);
+
     }
   }
 
@@ -134,7 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
           final TeacherModel teacher = teacherProvider.getSingleTeacher.first;
 
-          // ✅ Initialize first class safely
           if (selectedClassYear == null && teacher.assignedClasses.isNotEmpty) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               loadInitialClass(teacher);
@@ -225,7 +223,6 @@ class _HomeScreenState extends State<HomeScreen> {
           return const Center(child: Loader());
         }
 
-        // ✅ Get students of selected class & year
         final students = studentProvider.getStudents(
           selectedClassYear!.currentClass,
           selectedClassYear!.currentYear,
